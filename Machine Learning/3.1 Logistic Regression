@@ -1,0 +1,53 @@
+library(dslabs)
+data("heights")
+library(tidyverse)
+library(caret)
+
+# Key points
+# Logistic regression is an extension of linear regression that assures that the estimate 
+# of conditional probability  Pr(Y=1|X=x)  is between 0 and 1. This approach makes use of 
+# the logistic transformation: 
+#   g(p)=logp1???p 
+# With logistic regression, we model the conditional probability directly with:
+#   g{Pr(Y=1|X=x)}=£]0+£]1x 
+# Note that with this model, we can no longer use least squares. Instead we compute 
+# the maximum likelihood estimate (MLE). 
+# In R, we can fit the logistic regression model with the function glm() 
+# (generalized linear models). If we want to compute the conditional probabilities, 
+# we want type="response" since the default is to return the logistic transformed values.
+
+heights %>% 
+  mutate(x = round(height)) %>%
+  group_by(x) %>%
+  filter(n() >= 10) %>%
+  summarize(prop = mean(sex == "Female")) %>%
+  ggplot(aes(x, prop)) +
+  geom_point() + 
+  geom_abline(intercept = lm_fit$coef[1], slope = lm_fit$coef[2])
+
+range(p_hat)
+
+# fit logistic regression model
+glm_fit <- train_set %>%
+  mutate(y = as.numeric(sex=="Female")) %>%
+  glm(y ~ height, data = ., family="binomial")
+
+p_hat_logit <- predict(glm_fit, newdata = test_set, type="response")
+
+tmp <- heights %>%
+  mutate(x = round(height)) %>%
+  group_by(x) %>%
+  filter(n() >= 10) %>%
+  summarize(prop = mean(sex=="Female"))
+
+
+logistic_curve <- data.frame(x=seq(min(tmp$x), max(tmp$x))) %>%
+  mutate(p_hat = plogis(glm_fit$coef[1] + glm_fit$coef[2]*x))
+
+tmp %>% 
+  ggplot(aes(x, prop)) +
+  geom_point() +
+  geom_line(data = logistic_curve, mapping = aes(x, p_hat), lty = 2)
+
+y_hat_logit <- ifelse(p_hat_logit > 0.5, "Female", "Male") %>% factor
+confusionMatrix(y_hat_logit, test_set$sex)$overall[["Accuracy"]]

@@ -1,0 +1,29 @@
+data("polls_2008")
+
+# Key points
+# The general idea of smoothing is to group data points into strata in which the value of  
+# f(x)  can be assumed to be constant. We can make this assumption because we think  f(x)  
+# changes slowly and, as a result,  f(x)  is almost constant in small windows of time. 
+# This assumption implies that a good estimate for  f(x)  is the average of the  Yi  values 
+# in the window. The estimate is:
+#   f^(x0)=1N0???i???A0Yi 
+# In smoothing, we call the size of the interval  |x???x0|  satisfying the particular condition 
+# the window size, bandwidth or span.
+
+
+
+# bin smoothers
+span <- 7 
+fit <- with(polls_2008,ksmooth(day, margin, x.points = day, kernel="box", bandwidth =span))
+polls_2008 %>% mutate(smooth = fit$y) %>%
+  ggplot(aes(day, margin)) +
+  geom_point(size = 3, alpha = .5, color = "grey") + 
+  geom_line(aes(day, smooth), color="red")
+
+# kernel
+span <- 7
+fit <- with(polls_2008, ksmooth(day, margin,  x.points = day, kernel="normal", bandwidth = span))
+polls_2008 %>% mutate(smooth = fit$y) %>%
+  ggplot(aes(day, margin)) +
+  geom_point(size = 3, alpha = .5, color = "grey") + 
+  geom_line(aes(day, smooth), color="red")

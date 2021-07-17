@@ -1,0 +1,184 @@
+library(dslabs)
+library(tidyverse)
+library(caret)
+if(!exists("mnist")) mnist <- read_mnist()
+mnist
+class(mnist$train$images)
+x <- mnist$train$images[1:1000,] 
+y <- mnist$train$labels[1:1000]
+y
+
+
+# Key points
+# In matrix algebra, we have three main types of objects: scalars, vectors, and matrices.
+# Scalar:  
+# Vector:  
+# Matrix:  
+# In R, we can extract the dimension of a matrix with the function dim(). We can convert a 
+# vector into a matrix using the function as.matrix().
+
+length(x[,1])
+x_1 <- 1:5
+x_2 <- 6:10
+cbind(x_1, x_2)
+dim(x)
+dim(x_1)
+dim(as.matrix(x_1))
+dim(x)
+
+
+# Key points
+# In R, we can convert a vector into a matrix with the matrix() function. 
+# The matrix is filled in by column, but we can fill by row by using the byrow argument. 
+# The function t() can be used to directly transpose a matrix. 
+# 
+# Note that the matrix function recycles values in the vector without warning if the 
+# product of columns and rows does not match the length of the vector.
+
+my_vector <- 1:10
+
+# fill the matrix by column
+mat <- matrix(my_vector, 10, 1)
+mat
+
+# fill by row
+mat_t <- matrix(my_vector, 3, 5, byrow = TRUE)
+mat_t
+identical(t(mat), mat_t)
+matrix(my_vector, 5, 5)
+grid <- matrix(x[2,], 28, 28)
+image(1:28, 1:28, grid)
+
+# flip the image back
+image(1:28, 1:28, grid[, 28:1])
+
+# Key points
+# The function rowSums() computes the sum of each row.
+# The function rowMeans() computes the average of each row.
+# We can compute the column sums and averages using the functions colSums() and colMeans().
+# The matrixStats package adds functions that performs operations on each row or column very 
+# efficiently, including the functions rowSds() and colSds().
+# The apply() function lets you apply any function to a matrix. The first argument is the 
+# matrix, the second is the dimension (1 for rows, 2 for columns), and the third is the function. 
+
+sums <- rowSums(x)
+avg <- rowMeans(x)
+
+data_frame(labels = as.factor(y), row_averages = avg) %>%
+  qplot(labels, row_averages, data = ., geom = "boxplot")
+
+avgs <- apply(x, 1, mean)
+sds <- apply(x, 2, sd)
+
+
+# 
+# Key points
+# The operations used to extract columns: x[,c(351,352)].
+# The operations used to extract rows: x[c(2,3),].
+# We can also use logical indexes to determine which columns or rows to keep:  
+#   new_x <- x[ ,colSds(x) > 60].
+# Important note: if you select only one column or only one row, the result is no longer 
+# a matrix but a vector. We can preserve the matrix class by using the argument drop=FALSE. 
+install.packages("matrixStats")
+library(matrixStats)
+
+sds <- colSds(x)
+qplot(sds, bins = "30", color = I("black"))
+image(1:28, 1:28, matrix(sds, 28, 28)[, 28:1])
+
+#extract columns and rows
+x[ ,c(351,352)]
+x[c(2,3),]
+new_x <- x[ ,colSds(x) > 60]
+dim(new_x)
+class(x[,1])
+dim(x[1,])
+
+#preserve the matrix class
+class(x[ , 1, drop=FALSE])
+dim(x[, 1, drop=FALSE])
+
+
+
+
+
+# Key points
+# We can use logical operations with matrices:
+mat <- matrix(1:15, 5, 3)
+mat[mat > 6 & mat < 12] <- 0
+# We can also binarize the data using just matrix operations:
+bin_x <- x
+bin_x[bin_x < 255/2] <- 0 
+bin_x[bin_x > 255/2] <- 1
+# Code
+#index with matrices
+mat <- matrix(1:15, 5, 3)
+as.vector(mat)
+qplot(as.vector(x), bins = 30, color = I("black"))
+new_x <- x
+new_x[new_x < 50] <- 0
+
+mat <- matrix(1:15, 5, 3)
+mat[mat < 3] <- 0
+mat
+
+mat <- matrix(1:15, 5, 3)
+mat[mat > 6 & mat < 12] <- 0
+mat
+
+#binarize the data
+bin_x <- x
+bin_x[bin_x < 255/2] <- 0
+bin_x[bin_x > 255/2] <- 1
+bin_X <- (x > 255/2)*1
+
+
+# Key points
+# We can scale each row of a matrix using this line of code:
+(x - rowMeans(x)) / rowSds(x)
+# To scale each column of a matrix, we use this code:
+t(t(X) - colMeans(X))
+# We can also use a function called sweep() that works similarly to apply(). 
+# It takes each entry of a vector and subtracts it from the corresponding row or column:
+# X_mean_0 <- sweep(x, 2, colMeans(x))
+# Matrix multiplication: t(x) %*% x
+# The cross product: crossprod(x)
+# The inverse of a function: solve(crossprod(x))
+# The QR decomposition: qr(x)
+# Code
+#scale each row of a matrix
+(x - rowMeans(x)) / rowSds(x)
+
+#scale each column
+t(t(x) - colMeans(x))
+
+#take each entry of a vector and subtracts it from the corresponding row or column
+x_mean_0 <- sweep(x, 2, colMeans(x))
+
+#divide by the standard deviation
+x_mean_0 <- sweep(x, 2, colMeans(x))
+x_standardized <- sweep(x_mean_0, 2, colSds(x), FUN = "/")
+
+
+x <- matrix(rnorm(100*10), 100, 10)
+dim(x)
+nrow(x)
+ncol(x)
+
+# For each observation in the mnist training data, compute the proportion of pixels that
+# are in the grey area, defined as values between 50 and 205 (but not including 50 and 205).
+# (To visualize this, you can make a boxplot by digit class.)
+# 
+# What proportion of the 60000*784 pixels in the mnist training data are in the grey area 
+# overall, defined as values between 50 and 205? Report your answer to at least 3 significant 
+# digits.
+
+
+xx <- rowMeans(x > 50 & x <205)
+qplot(as.factor(y), xx, geom="boxplot")
+mean(xx)
+
+yy <- rowMeans(mnist$train$images >50 & mnist$train$images < 205)
+qplot(as.factor(mnist$train$labels), yy, geom="boxplot")
+mean(yy)
+
